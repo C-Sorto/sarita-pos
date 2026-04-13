@@ -99,6 +99,12 @@
     <div class="prods" id="prods">
       <div style="grid-column:1/-1;color:#ccc;font-size:13px;text-align:center;padding:20px 0">Seleccioná una categoría</div>
     </div>
+    <div id="sabor-wrap" style="display:none;margin-top:10px">
+      <div class="sec" style="margin-top:4px">Sabor</div>
+      <select id="sabor-select" class="enc-select" style="margin-bottom:0">
+        <option value="">— Seleccionar sabor —</option>
+      </select>
+    </div>
   </div>
 
   <div class="card card-gray">
@@ -172,8 +178,19 @@
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycby_0-BmUk80e-KeKOHa0KzRLwY1QvSiqI-aS0JPvn7OCfPyiJSaxOqJGpADS86kmI0dXA/exec';
 const TURNO='11am-8pm';
 const CATS_ORDER=['Bebidas','Conos','Especialidades','Mini Especialidades','Peleteria','Envasados','Pasteles','Otros'];
-let productos=[],catActiva='',orden=[],metodo='Efectivo',total=0;
+let productos=[],saboresCat={},catActiva='',orden=[],metodo='Efectivo',total=0;
+const CATS_SABOR=['Envasados','Conos','Bebidas','Otros'];
 
+function cargarSabores(){
+  window._saboresCallback=function(data){
+    if(data.success)saboresCat=data.sabores;
+    const s=document.getElementById('jsonp-sabores');if(s)s.remove();
+  };
+  const script=document.createElement('script');
+  script.id='jsonp-sabores';
+  script.src=SCRIPT_URL+'?action=sabores&callback=_saboresCallback';
+  document.head.appendChild(script);
+}
 function cargarProductos(){
   window._jsonpCallback=function(data){
     if(data.success){productos=data.productos;renderCats();}
@@ -197,17 +214,26 @@ function selCat(cat){
   catActiva=cat;renderCats();
   const prods=productos.filter(p=>p.categoria===cat);
   document.getElementById('prods').innerHTML=prods.map(p=>`<button class="prod-btn" onclick="agregarItem('${p.sku}')"><div class="prod-nombre">${p.producto}</div><div class="prod-precio">$${Number(p.precio).toFixed(2)}</div></button>`).join('');
+  const wrap=document.getElementById('sabor-wrap');
+  const sel=document.getElementById('sabor-select');
+  if(CATS_SABOR.includes(cat)&&saboresCat[cat]){
+    sel.innerHTML='<option value="">— Seleccionar sabor —</option>'+saboresCat[cat].map(s=>`<option value="${s}">${s}</option>`).join('');
+    wrap.style.display='block';
+  }else{wrap.style.display='none';sel.value='';}
 }
 
 function agregarItem(sku){
   const prod=productos.find(p=>p.sku===sku);if(!prod)return;
-  const ex=orden.find(i=>i.sku===sku);
-  if(ex){ex.qty++;}else{orden.push({sku,nombre:prod.producto,precio:Number(prod.precio),qty:1,categoria:prod.categoria,tamano:prod.tamano});}
+  const sabor=CATS_SABOR.includes(prod.categoria)?document.getElementById('sabor-select').value:'';
+  if(CATS_SABOR.includes(prod.categoria)&&!sabor){showToast('Seleccioná un sabor primero');return;}
+  const key=sku+'|'+sabor;
+  const ex=orden.find(i=>i.key===key);
+  if(ex){ex.qty++;}else{orden.push({key,sku,nombre:prod.producto,precio:Number(prod.precio),qty:1,categoria:prod.categoria,tamano:prod.tamano,sabor});}
   renderOrden();
 }
 
-function cambiarQty(sku,delta){
-  const idx=orden.findIndex(i=>i.sku===sku);if(idx===-1)return;
+function cambiarQty(key,delta){
+  const idx=orden.findIndex(i=>i.key===key);if(idx===-1)return;
   orden[idx].qty+=delta;if(orden[idx].qty<=0)orden.splice(idx,1);
   renderOrden();
 }
@@ -217,7 +243,7 @@ function renderOrden(){
   if(orden.length===0){el.innerHTML='<div class="orden-vacia">Sin productos aún</div>';total=0;}
   else{
     total=orden.reduce((s,i)=>s+i.precio*i.qty,0);
-    el.innerHTML=orden.map(i=>`<div class="oitem"><div class="oitem-nombre">${i.nombre}</div><div class="qty-ctrl"><button class="qbtn" onclick="cambiarQty('${i.sku}',-1)">−</button><span class="qnum">${i.qty}</span><button class="qbtn" onclick="cambiarQty('${i.sku}',1)">+</button></div><div class="oitem-total">$${(i.precio*i.qty).toFixed(2)}</div></div>`).join('');
+    el.innerHTML=orden.map(i=>`<div class="oitem"><div class="oitem-nombre">${i.nombre}${i.sabor?' <span style="font-size:11px;color:#999">('+i.sabor+')</span>':''}</div><div class="qty-ctrl"><button class="qbtn" onclick="cambiarQty('${i.key}',-1)">−</button><span class="qnum">${i.qty}</span><button class="qbtn" onclick="cambiarQty('${i.key}',1)">+</button></div><div class="oitem-total">$${(i.precio*i.qty).toFixed(2)}</div></div>`).join('');
   }
   document.getElementById('total').textContent='$'+total.toFixed(2);
   calcVuelto();
@@ -260,7 +286,7 @@ async function registrarVenta(){
   const btn=document.getElementById('btn-reg');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Registrando...';
 
-  const ventasData=orden.map(i=>({encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo,_ts:Date.now()}));
+  const ventasData=orden.map(i=>({encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo,sabor:i.sabor||'',_ts:Date.now()}));
 
   if(!navigator.onLine){
     guardarPendientes(ventasData);
@@ -381,7 +407,7 @@ async function confirmarVenta(){
   const billete=parseFloat(document.getElementById('billete').value)||0;
   const btn=document.getElementById('btn-reg');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Registrando...';
-  const ventasData=orden.map(i=>({encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo,_ts:Date.now()}));
+  const ventasData=orden.map(i=>({encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo,sabor:i.sabor||'',_ts:Date.now()}));
   if(!navigator.onLine){
     guardarPendientes(ventasData);
     showToast('Sin internet — guardado localmente');
@@ -449,6 +475,7 @@ function cerrarResumen(){
 
 cargarProductos();
 cargarProductos();
+cargarSabores();
 actualizarBadge();
 window.addEventListener('online',()=>{showToast('Conexión restaurada');setTimeout(sincronizarPendientes,1000);});
 window.addEventListener('offline',()=>{showToast('Sin internet — modo offline activo');});
