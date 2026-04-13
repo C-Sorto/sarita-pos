@@ -79,10 +79,13 @@
 <body>
 <div class="pos">
 
-  <div class="header" style="justify-content:center;padding:18px">
-    <svg viewBox="0 0 200 60" style="height:42px" xmlns="http://www.w3.org/2000/svg">
+  <div class="header" style="padding:16px 18px">
+    <svg viewBox="0 0 200 60" style="height:38px" xmlns="http://www.w3.org/2000/svg">
       <text x="100" y="48" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="52" fill="white" letter-spacing="-1">Sarita</text>
     </svg>
+    <div id="sync-badge" style="display:none;background:rgba(0,0,0,0.25);border-radius:20px;padding:4px 10px;font-size:12px;color:#fff;font-weight:600;cursor:pointer" onclick="sincronizarPendientes()">
+      ⚠ <span id="sync-count">0</span> pendientes
+    </div>
   </div>
 
   <div class="card">
@@ -255,6 +258,9 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 cargarProductos();
+actualizarBadge();
+window.addEventListener('online',()=>{showToast('Conexión restaurada');sincronizarPendientes();});
+window.addEventListener('offline',()=>{showToast('Sin internet — modo offline activo');});
 </script>
 </body>
 </html>
