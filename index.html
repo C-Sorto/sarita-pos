@@ -188,7 +188,15 @@ function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
-cargarProductos();
-</script>
+function cargarProductos() {
+  window._jsonpCallback = function(data) {
+    if (data.success) { productos = data.productos; renderCats(); }
+    document.head.removeChild(document.getElementById('jsonp-script'));
+  };
+  const script = document.createElement('script');
+  script.id = 'jsonp-script';
+  script.src = SCRIPT_URL + '?callback=_jsonpCallback';
+  document.head.appendChild(script);
+}
 </body>
 </html>
