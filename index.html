@@ -177,38 +177,23 @@ async function registrarVenta(){
   if(!encargada){showToast('Seleccioná la encargada');return;}
   const btn=document.getElementById('btn-reg');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Registrando...';
-  try{
-    for(const i of orden){
-      await enviarVentaJSONP({
-        encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,
-        tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,
-        total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo
-      });
-    }
+  let ok=true;
+  for(const i of orden){
+    try{
+      fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo})});
+    }catch(e){ok=false;}
+  }
+  await new Promise(r=>setTimeout(r,1500));
+  if(ok){
     showToast('✓ Venta registrada');
     orden=[];renderOrden();
     document.getElementById('billete').value='';calcVuelto();
-  }catch(e){showToast('Error al registrar');}
+  }else{showToast('Error al registrar');}
   btn.disabled=false;btn.innerHTML='Registrar venta';
 }
-
-function enviarVentaJSONP(datos){
-  return new Promise((resolve,reject)=>{
-    const cbName='_cb'+Date.now();
-    window[cbName]=function(data){
-      delete window[cbName];
-      const s=document.getElementById('jsonp-post');
-      if(s)document.head.removeChild(s);
-      data.success?resolve():reject();
-    };
-    datos.callback=cbName;
-    const params=encodeURIComponent(JSON.stringify(datos));
-    const script=document.createElement('script');
-    script.id='jsonp-post';
-    script.src=SCRIPT_URL+'?method=POST&data='+params+'&callback='+cbName;
-    script.onerror=reject;
-    document.head.appendChild(script);
-  });
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
 }
 cargarProductos();
 </script>
