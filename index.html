@@ -83,8 +83,9 @@
     <svg viewBox="0 0 200 60" style="height:38px" xmlns="http://www.w3.org/2000/svg">
       <text x="100" y="48" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="52" fill="white" letter-spacing="-1">Sarita</text>
     </svg>
-    <div id="sync-badge" style="display:none;background:rgba(0,0,0,0.25);border-radius:20px;padding:4px 10px;font-size:12px;color:#fff;font-weight:600;cursor:pointer" onclick="sincronizarPendientes()">
-      ⚠ <span id="sync-count">0</span> pendientes
+    <div style="display:flex;gap:8px;align-items:center">
+      <div id="sync-badge" style="display:none;background:rgba(0,0,0,0.25);border-radius:20px;padding:4px 10px;font-size:12px;color:#fff;font-weight:600;cursor:pointer" onclick="sincronizarPendientes()">⚠ <span id="sync-count">0</span></div>
+      <button onclick="verResumen()" style="background:rgba(0,0,0,0.2);border:none;border-radius:20px;padding:5px 11px;font-size:12px;color:#fff;font-weight:600;cursor:pointer">📊 Hoy</button>
     </div>
   </div>
 
@@ -101,7 +102,10 @@
   </div>
 
   <div class="card card-gray">
-    <div class="sec">Orden</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="sec" style="margin-bottom:0">Orden</div>
+      <button onclick="cancelarOrden()" style="font-size:12px;color:#999;border:none;background:none;cursor:pointer;padding:2px 6px">✕ Cancelar</button>
+    </div>
     <div id="orden"><div class="orden-vacia">Sin productos aún</div></div>
     <div class="total-row">
       <span class="total-label">Total</span>
@@ -138,10 +142,31 @@
       <option value="">— Seleccionar —</option>
       <option>Josseline Melgar</option>
     </select>
-    <button class="btn-reg" id="btn-reg" onclick="registrarVenta()">Registrar venta</button>
+    <button class="btn-reg" id="btn-reg" onclick="abrirConfirm()">Registrar venta</button>
   </div>
 
 </div>
+<!-- Modal confirmación -->
+<div id="modal-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:none;align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:430px">
+    <p style="font-size:15px;font-weight:600;color:#222;margin-bottom:6px;text-align:center">¿Confirmar venta?</p>
+    <p style="font-size:13px;color:#888;text-align:center;margin-bottom:16px" id="confirm-detalle"></p>
+    <div style="display:flex;gap:10px">
+      <button onclick="cerrarConfirm()" style="flex:1;padding:12px;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:#666">Cancelar</button>
+      <button onclick="confirmarVenta()" style="flex:1;padding:12px;border:none;border-radius:10px;background:#E8001A;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal resumen del día -->
+<div id="modal-resumen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:380px">
+    <p style="font-size:16px;font-weight:700;color:#222;margin-bottom:16px;text-align:center">Resumen del día</p>
+    <div id="resumen-contenido"></div>
+    <button onclick="cerrarResumen()" style="width:100%;padding:12px;border:none;border-radius:10px;background:#E8001A;color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:16px">Cerrar</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycby_0-BmUk80e-KeKOHa0KzRLwY1QvSiqI-aS0JPvn7OCfPyiJSaxOqJGpADS86kmI0dXA/exec';
@@ -317,6 +342,112 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2800);
 }
 
+function cancelarOrden(){
+  if(orden.length===0)return;
+  if(confirm('¿Cancelar la orden actual?')){orden=[];renderOrden();}
+}
+
+let ventasPendConfirm=[];
+function prepararConfirm(){
+  let valido=true;
+  if(orden.length===0){showToast('Agregá al menos un producto');return false;}
+  const encargada=document.getElementById('encargada').value;
+  const billete=parseFloat(document.getElementById('billete').value)||0;
+  const encSel=document.getElementById('encargada');
+  if(!encargada){encSel.style.borderColor='#E8001A';showToast('Seleccioná la encargada');valido=false;}
+  else{encSel.style.borderColor='#e0e0e0';}
+  if(metodo==='Efectivo'&&billete<total&&total>0){
+    document.getElementById('billete').style.borderColor='#E8001A';
+    showToast('El billete es menor al total');valido=false;
+  }else{document.getElementById('billete').style.borderColor='#e0e0e0';}
+  return valido;
+}
+
+function abrirConfirm(){
+  if(!prepararConfirm())return;
+  const items=orden.map(i=>`${i.qty}x ${i.nombre}`).join(', ');
+  document.getElementById('confirm-detalle').textContent=`${items} — Total: $${total.toFixed(2)} (${metodo})`;
+  const m=document.getElementById('modal-confirm');
+  m.style.display='flex';
+}
+
+function cerrarConfirm(){
+  document.getElementById('modal-confirm').style.display='none';
+}
+
+async function confirmarVenta(){
+  cerrarConfirm();
+  const encargada=document.getElementById('encargada').value;
+  const billete=parseFloat(document.getElementById('billete').value)||0;
+  const btn=document.getElementById('btn-reg');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Registrando...';
+  const ventasData=orden.map(i=>({encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo,_ts:Date.now()}));
+  if(!navigator.onLine){
+    guardarPendientes(ventasData);
+    showToast('Sin internet — guardado localmente');
+    limpiarOrden();btn.disabled=false;btn.innerHTML='Registrar venta';return;
+  }
+  let todasOk=true;
+  for(const v of ventasData){
+    try{await enviarVenta(v);}catch(e){todasOk=false;guardarPendientes([v]);}
+  }
+  if(todasOk){
+    guardarVentasHoy(ventasData);
+    showToast('✓ Venta registrada');
+  }else{showToast('Parte guardada localmente');}
+  limpiarOrden();btn.disabled=false;btn.innerHTML='Registrar venta';
+}
+
+function guardarVentasHoy(ventas){
+  const guardadas=JSON.parse(localStorage.getItem('sarita_ventas_hoy')||'[]');
+  ventas.forEach(v=>guardadas.push(v));
+  localStorage.setItem('sarita_ventas_hoy',JSON.stringify(guardadas));
+}
+
+function verResumen(){
+  const pendientes=JSON.parse(localStorage.getItem('sarita_pendientes')||'[]');
+  const ventas=JSON.parse(localStorage.getItem('sarita_ventas_hoy')||'[]');
+  const hoy=new Date().toDateString();
+  const ventasHoy=ventas.filter(v=>new Date(v._ts).toDateString()===hoy);
+  const efectivo=ventasHoy.filter(v=>v.metodo_pago==='Efectivo').reduce((s,v)=>s+Number(v.total_venta),0);
+  const tarjeta=ventasHoy.filter(v=>v.metodo_pago==='Tarjeta').reduce((s,v)=>s+Number(v.total_venta),0);
+  const pedidosya=ventasHoy.filter(v=>v.metodo_pago==='Pedidos Ya').reduce((s,v)=>s+Number(v.total_venta),0);
+  const totalHoy=efectivo+tarjeta+pedidosya;
+  document.getElementById('resumen-contenido').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:#fafafa;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:#999;font-weight:600;text-transform:uppercase;margin-bottom:4px">Total del día</div>
+        <div style="font-size:22px;font-weight:700;color:#222">$${totalHoy.toFixed(2)}</div>
+      </div>
+      <div style="background:#fafafa;border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:#999;font-weight:600;text-transform:uppercase;margin-bottom:4px">Transacciones</div>
+        <div style="font-size:22px;font-weight:700;color:#222">${ventasHoy.length}</div>
+      </div>
+    </div>
+    <div style="border:0.5px solid #f0f0f0;border-radius:10px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid #f0f0f0">
+        <span style="font-size:13px;color:#555">Efectivo</span>
+        <span style="font-size:13px;font-weight:600;color:#222">$${efectivo.toFixed(2)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid #f0f0f0">
+        <span style="font-size:13px;color:#555">Tarjeta</span>
+        <span style="font-size:13px;font-weight:600;color:#222">$${tarjeta.toFixed(2)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 14px">
+        <span style="font-size:13px;color:#555">Pedidos Ya</span>
+        <span style="font-size:13px;font-weight:600;color:#222">$${pedidosya.toFixed(2)}</span>
+      </div>
+    </div>
+    ${pendientes.length>0?`<p style="font-size:12px;color:#E8001A;text-align:center;margin-top:10px">⚠ ${pendientes.length} venta(s) pendiente(s) de sincronizar</p>`:''}
+  `;
+  document.getElementById('modal-resumen').style.display='flex';
+}
+
+function cerrarResumen(){
+  document.getElementById('modal-resumen').style.display='none';
+}
+
+cargarProductos();
 cargarProductos();
 actualizarBadge();
 window.addEventListener('online',()=>{showToast('Conexión restaurada');setTimeout(sincronizarPendientes,1000);});
