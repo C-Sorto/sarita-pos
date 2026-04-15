@@ -238,7 +238,7 @@ function renderCats(){
 function selCat(cat){
   catActiva=cat; renderCats();
   const prods=productos.filter(p=>p.categoria===cat);
-  document.getElementById('prods').innerHTML=prods.map(p=>`<button class="prod-btn" onclick="agregarItem('${p.sku}')"><div class="prod-nombre">${p.producto}</div><div class="prod-precio">$${Number(p.precio).toFixed(2)}</div></button>`).join('');
+  document.getElementById('prods').innerHTML=prods.map(p=>`<button class="prod-btn" onclick="agregarItem('${p.sku}')"><div class="prod-nombre">${p.producto}</div></button>`).join('');
   const wrap=document.getElementById('sabor-wrap');
   const sel=document.getElementById('sabor-select');
   if(CATS_SABOR.includes(cat)&&saboresCat[cat]){
@@ -268,9 +268,10 @@ function renderOrden(){
   if(orden.length===0){ el.innerHTML='<div class="orden-vacia">Sin productos aún</div>'; total=0; }
   else{
     total=orden.reduce((s,i)=>s+i.precio*i.qty,0);
-    el.innerHTML=orden.map(i=>`<div class="oitem"><div class="oitem-nombre">${i.nombre}${i.sabor?' <span style="font-size:11px;color:#999">('+i.sabor+')</span>':''}</div><div class="qty-ctrl"><button class="qbtn" onclick="cambiarQty('${i.key}',-1)">−</button><span class="qnum">${i.qty}</span><button class="qbtn" onclick="cambiarQty('${i.key}',1)">+</button></div><div class="oitem-total">$${(i.precio*i.qty).toFixed(2)}</div></div>`).join('');
+    el.innerHTML=orden.map(i=>`<div class="oitem"><div class="oitem-nombre">${i.nombre}${i.sabor?' <span style="font-size:11px;color:#999">('+i.sabor+')</span>':''}</div><div class="qty-ctrl"><button class="qbtn" onclick="cambiarQty('${i.key}',-1)">−</button><span class="qnum">${i.qty}</span><button class="qbtn" onclick="cambiarQty('${i.key}',1)">+</button></div></div>`).join('');
   }
-  document.getElementById('total').textContent='$'+total.toFixed(2);
+  document.getElementById('total').textContent='';
+  document.getElementById('total').style.display='none';
   calcVuelto();
 }
 
@@ -312,7 +313,7 @@ function prepararConfirm(){
 function abrirConfirm(){
   if(!prepararConfirm()) return;
   const items=orden.map(i=>`${i.qty}x ${i.nombre}`).join(', ');
-  document.getElementById('confirm-detalle').textContent=`${items} — Total: $${total.toFixed(2)} (${metodo})`;
+  document.getElementById('confirm-detalle').textContent=`${items} (${metodo})`;
   document.getElementById('modal-confirm').style.display='flex';
 }
 
