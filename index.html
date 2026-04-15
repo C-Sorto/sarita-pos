@@ -15,6 +15,9 @@
     .header img{height:32px;filter:brightness(0) invert(1)}
     .header-sub{font-size:12px;color:rgba(255,255,255,0.8);font-weight:400}
 
+    /* Demo banner */
+    .demo-banner{background:#fff3cd;border:1.5px solid #ffc107;border-radius:10px;padding:8px 14px;margin-bottom:10px;text-align:center;font-size:12px;color:#856404;font-weight:600}
+
     /* Cards */
     .card{background:#fff;border:0.5px solid #e8e8e8;border-radius:14px;padding:14px;margin-bottom:10px}
     .card-gray{background:#fafafa}
@@ -89,6 +92,11 @@
     </div>
   </div>
 
+  <!-- Banner demo — solo visible en modo demo -->
+  <div class="demo-banner" id="demo-banner" style="display:none">
+    🧪 Modo demo — las ventas no se guardan
+  </div>
+
   <div class="card">
     <div class="sec">Categoría</div>
     <div class="cats" id="cats"><div style="color:#ccc;font-size:13px">Cargando...</div></div>
@@ -147,13 +155,15 @@
     <select class="enc-select" id="encargada">
       <option value="">— Seleccionar —</option>
       <option>Josseline Melgar</option>
+      <option>Demo User</option>
     </select>
     <button class="btn-reg" id="btn-reg" onclick="abrirConfirm()">Registrar venta</button>
   </div>
 
 </div>
+
 <!-- Modal confirmación -->
-<div id="modal-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:none;align-items:flex-end;justify-content:center">
+<div id="modal-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center">
   <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:430px">
     <p style="font-size:15px;font-weight:600;color:#222;margin-bottom:6px;text-align:center">¿Confirmar venta?</p>
     <p style="font-size:13px;color:#888;text-align:center;margin-bottom:16px" id="confirm-detalle"></p>
@@ -174,44 +184,59 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
 <script>
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycby_0-BmUk80e-KeKOHa0KzRLwY1QvSiqI-aS0JPvn7OCfPyiJSaxOqJGpADS86kmI0dXA/exec';
-const TURNO='11am-8pm';
-const CATS_ORDER=['Bebidas','Conos','Especialidades','Mini Especialidades','Peleteria','Envasados','Pasteles','Otros'];
-let productos=[],saboresCat={},catActiva='',orden=[],metodo='Efectivo',total=0;
-const CATS_SABOR=['Envasados','Conos','Bebidas','Otros'];
+// ============================================================
+// CONFIGURACIÓN — solo cambiá esta línea para alternar modos
+// true  = modo demo (para portfolio/recruiters, no guarda nada)
+// false = modo real (kiosco Sarita, guarda en Google Sheets)
+// ============================================================
+const DEMO_MODE = true;
+
+const SCRIPT_URL_REAL = 'https://script.google.com/macros/s/AKfycby_0-BmUk80e-KeKOHa0KzRLwY1QvSiqI-aS0JPvn7OCfPyiJSaxOqJGpADS86kmI0dXA/exec';
+const SCRIPT_URL_DEMO = 'https://script.google.com/macros/s/AKfycbzpujranJfSGtEmANsDut-BQeFOHDdwdPTTisj5L4nEnPMiMUUAUW8Dewp5SxJy7tWY1w/exec';
+const SCRIPT_URL = DEMO_MODE ? SCRIPT_URL_DEMO : SCRIPT_URL_REAL;
+
+const TURNO = '11am-8pm';
+const CATS_ORDER = ['Bebidas','Conos','Especialidades','Mini Especialidades','Peleteria','Envasados','Pasteles','Otros'];
+let productos=[], saboresCat={}, catActiva='', orden=[], metodo='Efectivo', total=0;
+const CATS_SABOR = ['Envasados','Conos','Bebidas','Otros'];
+
+// Mostrar banner demo si aplica
+if (DEMO_MODE) document.getElementById('demo-banner').style.display = 'block';
 
 function cargarSabores(){
   window._saboresCallback=function(data){
-    if(data.success)saboresCat=data.sabores;
-    const s=document.getElementById('jsonp-sabores');if(s)s.remove();
+    if(data.success) saboresCat=data.sabores;
+    const s=document.getElementById('jsonp-sabores'); if(s) s.remove();
   };
   const script=document.createElement('script');
   script.id='jsonp-sabores';
   script.src=SCRIPT_URL+'?action=sabores&callback=_saboresCallback';
   document.head.appendChild(script);
 }
+
 function cargarProductos(){
   window._jsonpCallback=function(data){
-    if(data.success){productos=data.productos;renderCats();}
-    else{document.getElementById('cats').innerHTML='<div style="color:#E8001A;font-size:13px">Error al cargar</div>';}
-    const s=document.getElementById('jsonp-script');if(s)s.remove();
+    if(data.success){ productos=data.productos; renderCats(); }
+    else{ document.getElementById('cats').innerHTML='<div style="color:#E8001A;font-size:13px">Error al cargar</div>'; }
+    const s=document.getElementById('jsonp-script'); if(s) s.remove();
   };
   const script=document.createElement('script');
   script.id='jsonp-script';
   script.src=SCRIPT_URL+'?callback=_jsonpCallback';
-  script.onerror=function(){document.getElementById('cats').innerHTML='<div style="color:#E8001A;font-size:13px">Error de conexión</div>';};
+  script.onerror=function(){ document.getElementById('cats').innerHTML='<div style="color:#E8001A;font-size:13px">Error de conexión</div>'; };
   document.head.appendChild(script);
 }
 
 function renderCats(){
   const cats=[...new Set(productos.map(p=>p.categoria))];
-  cats.sort((a,b)=>{const ia=CATS_ORDER.indexOf(a),ib=CATS_ORDER.indexOf(b);return(ia===-1?99:ia)-(ib===-1?99:ib);});
+  cats.sort((a,b)=>{ const ia=CATS_ORDER.indexOf(a),ib=CATS_ORDER.indexOf(b); return(ia===-1?99:ia)-(ib===-1?99:ib); });
   document.getElementById('cats').innerHTML=cats.map(c=>`<button class="cat-btn${c===catActiva?' active':''}" onclick="selCat('${c}')">${c}</button>`).join('');
 }
 
 function selCat(cat){
-  catActiva=cat;renderCats();
+  catActiva=cat; renderCats();
   const prods=productos.filter(p=>p.categoria===cat);
   document.getElementById('prods').innerHTML=prods.map(p=>`<button class="prod-btn" onclick="agregarItem('${p.sku}')"><div class="prod-nombre">${p.producto}</div><div class="prod-precio">$${Number(p.precio).toFixed(2)}</div></button>`).join('');
   const wrap=document.getElementById('sabor-wrap');
@@ -219,28 +244,28 @@ function selCat(cat){
   if(CATS_SABOR.includes(cat)&&saboresCat[cat]){
     sel.innerHTML='<option value="">— Seleccionar sabor —</option>'+saboresCat[cat].map(s=>`<option value="${s}">${s}</option>`).join('');
     wrap.style.display='block';
-  }else{wrap.style.display='none';sel.value='';}
+  } else { wrap.style.display='none'; sel.value=''; }
 }
 
 function agregarItem(sku){
-  const prod=productos.find(p=>p.sku===sku);if(!prod)return;
+  const prod=productos.find(p=>p.sku===sku); if(!prod) return;
   const sabor=CATS_SABOR.includes(prod.categoria)?document.getElementById('sabor-select').value:'';
-  if(CATS_SABOR.includes(prod.categoria)&&!sabor){showToast('Seleccioná un sabor primero');return;}
+  if(CATS_SABOR.includes(prod.categoria)&&!sabor){ showToast('Seleccioná un sabor primero'); return; }
   const key=sku+'|'+sabor;
   const ex=orden.find(i=>i.key===key);
-  if(ex){ex.qty++;}else{orden.push({key,sku,nombre:prod.producto,precio:Number(prod.precio),qty:1,categoria:prod.categoria,tamano:prod.tamano,sabor});}
+  if(ex){ ex.qty++; } else { orden.push({key,sku,nombre:prod.producto,precio:Number(prod.precio),qty:1,categoria:prod.categoria,tamano:prod.tamano,sabor}); }
   renderOrden();
 }
 
 function cambiarQty(key,delta){
-  const idx=orden.findIndex(i=>i.key===key);if(idx===-1)return;
-  orden[idx].qty+=delta;if(orden[idx].qty<=0)orden.splice(idx,1);
+  const idx=orden.findIndex(i=>i.key===key); if(idx===-1) return;
+  orden[idx].qty+=delta; if(orden[idx].qty<=0) orden.splice(idx,1);
   renderOrden();
 }
 
 function renderOrden(){
   const el=document.getElementById('orden');
-  if(orden.length===0){el.innerHTML='<div class="orden-vacia">Sin productos aún</div>';total=0;}
+  if(orden.length===0){ el.innerHTML='<div class="orden-vacia">Sin productos aún</div>'; total=0; }
   else{
     total=orden.reduce((s,i)=>s+i.precio*i.qty,0);
     el.innerHTML=orden.map(i=>`<div class="oitem"><div class="oitem-nombre">${i.nombre}${i.sabor?' <span style="font-size:11px;color:#999">('+i.sabor+')</span>':''}</div><div class="qty-ctrl"><button class="qbtn" onclick="cambiarQty('${i.key}',-1)">−</button><span class="qnum">${i.qty}</span><button class="qbtn" onclick="cambiarQty('${i.key}',1)">+</button></div><div class="oitem-total">$${(i.precio*i.qty).toFixed(2)}</div></div>`).join('');
@@ -257,7 +282,7 @@ function calcVuelto(){
   el.style.color=vuelto<0?'#E8001A':'#C0001A';
 }
 
-function setBillete(val){document.getElementById('billete').value=val;calcVuelto();}
+function setBillete(val){ document.getElementById('billete').value=val; calcVuelto(); }
 
 function setMetodo(m){
   metodo=m;
@@ -266,49 +291,74 @@ function setMetodo(m){
   document.getElementById('met-pedidosya').classList.toggle('active',m==='Pedidos Ya');
   const soloEfectivo=m==='Efectivo';
   document.getElementById('cobro-efectivo').style.display=soloEfectivo?'block':'none';
-  if(!soloEfectivo){document.getElementById('billete').value='';document.getElementById('vuelto').textContent='—';}
+  if(!soloEfectivo){ document.getElementById('billete').value=''; document.getElementById('vuelto').textContent='—'; }
 }
 
-async function registrarVenta(){
-  let valido=true;
-  if(orden.length===0){showToast('Agregá al menos un producto');return;}
+function prepararConfirm(){
+  if(orden.length===0){ showToast('Agregá al menos un producto'); return false; }
   const encargada=document.getElementById('encargada').value;
   const billete=parseFloat(document.getElementById('billete').value)||0;
   const encSel=document.getElementById('encargada');
-  if(!encargada){encSel.style.borderColor='#E8001A';showToast('Seleccioná la encargada');valido=false;}
-  else{encSel.style.borderColor='#e0e0e0';}
+  let valido=true;
+  if(!encargada){ encSel.style.borderColor='#E8001A'; showToast('Seleccioná la encargada'); valido=false; }
+  else{ encSel.style.borderColor='#e0e0e0'; }
   if(metodo==='Efectivo'&&billete<total&&total>0){
     document.getElementById('billete').style.borderColor='#E8001A';
-    showToast('El billete es menor al total');valido=false;
-  }else{document.getElementById('billete').style.borderColor='#e0e0e0';}
-  if(!valido)return;
+    showToast('El billete es menor al total'); valido=false;
+  } else { document.getElementById('billete').style.borderColor='#e0e0e0'; }
+  return valido;
+}
 
+function abrirConfirm(){
+  if(!prepararConfirm()) return;
+  const items=orden.map(i=>`${i.qty}x ${i.nombre}`).join(', ');
+  document.getElementById('confirm-detalle').textContent=`${items} — Total: $${total.toFixed(2)} (${metodo})`;
+  document.getElementById('modal-confirm').style.display='flex';
+}
+
+function cerrarConfirm(){ document.getElementById('modal-confirm').style.display='none'; }
+
+async function confirmarVenta(){
+  cerrarConfirm();
+  const encargada=document.getElementById('encargada').value;
   const btn=document.getElementById('btn-reg');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Registrando...';
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Registrando...';
 
-  const ventasData=orden.map(i=>({encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo,sabor:i.sabor||'',_ts:Date.now()}));
+  const ventasData=orden.map(i=>({
+    encargada, turno:TURNO, categoria:i.categoria, producto:i.nombre,
+    tamano:i.tamano, cantidad:i.qty, precio_unitario:i.precio,
+    total_venta:+(i.precio*i.qty).toFixed(2), metodo_pago:metodo,
+    sabor:i.sabor||'', _ts:Date.now()
+  }));
 
-  if(!navigator.onLine){
-    guardarPendientes(ventasData);
-    showToast('Sin internet — guardado localmente');
-    limpiarOrden();
-    btn.disabled=false;btn.innerHTML='Registrar venta';
+  // En modo demo: simular registro sin guardar nada real
+  if(DEMO_MODE){
+    await new Promise(r=>setTimeout(r,800)); // simular latencia
+    guardarVentasHoy(ventasData);
+    showToast('✓ Venta registrada (demo)');
+    limpiarOrden(); btn.disabled=false; btn.innerHTML='Registrar venta';
     return;
   }
 
+  // Modo real
+  if(!navigator.onLine){
+    guardarPendientes(ventasData);
+    showToast('Sin internet — guardado localmente');
+    limpiarOrden(); btn.disabled=false; btn.innerHTML='Registrar venta';
+    return;
+  }
   let todasOk=true;
   for(const v of ventasData){
-    try{await enviarVenta(v);}
-    catch(e){todasOk=false;guardarPendientes([v]);}
+    try{ await enviarVenta(v); }
+    catch(e){ todasOk=false; guardarPendientes([v]); }
   }
-  if(todasOk){showToast('✓ Venta registrada');}
-  else{showToast('Parte guardada localmente');}
-  limpiarOrden();
-  btn.disabled=false;btn.innerHTML='Registrar venta';
+  if(todasOk){ guardarVentasHoy(ventasData); showToast('✓ Venta registrada'); }
+  else{ showToast('Parte guardada localmente'); }
+  limpiarOrden(); btn.disabled=false; btn.innerHTML='Registrar venta';
 }
 
 function limpiarOrden(){
-  orden=[];renderOrden();
+  orden=[]; renderOrden();
   document.getElementById('billete').value='';
   calcVuelto();
 }
@@ -316,10 +366,10 @@ function limpiarOrden(){
 function enviarVenta(datos){
   return new Promise((resolve,reject)=>{
     const cbName='_vcb'+Date.now();
-    const timer=setTimeout(()=>{delete window[cbName];const s=document.getElementById('jsonp-venta');if(s)s.remove();reject('timeout');},8000);
+    const timer=setTimeout(()=>{ delete window[cbName]; const s=document.getElementById('jsonp-venta'); if(s) s.remove(); reject('timeout'); },8000);
     window[cbName]=function(data){
-      clearTimeout(timer);delete window[cbName];
-      const s=document.getElementById('jsonp-venta');if(s)s.remove();
+      clearTimeout(timer); delete window[cbName];
+      const s=document.getElementById('jsonp-venta'); if(s) s.remove();
       data.success?resolve():reject('fail');
     };
     const {_ts,...datosSinTs}=datos;
@@ -327,7 +377,7 @@ function enviarVenta(datos){
     const script=document.createElement('script');
     script.id='jsonp-venta';
     script.src=SCRIPT_URL+'?'+params.toString();
-    script.onerror=()=>{clearTimeout(timer);reject('error');};
+    script.onerror=()=>{ clearTimeout(timer); reject('error'); };
     document.head.appendChild(script);
   });
 }
@@ -343,85 +393,25 @@ function actualizarBadge(){
   const pendientes=JSON.parse(localStorage.getItem('sarita_pendientes')||'[]');
   const badge=document.getElementById('sync-badge');
   const count=document.getElementById('sync-count');
-  if(pendientes.length>0){badge.style.display='block';count.textContent=pendientes.length;}
-  else{badge.style.display='none';}
+  if(pendientes.length>0){ badge.style.display='block'; count.textContent=pendientes.length; }
+  else{ badge.style.display='none'; }
 }
 
 async function sincronizarPendientes(){
+  if(DEMO_MODE){ showToast('Modo demo — sin sincronización'); return; }
   const pendientes=JSON.parse(localStorage.getItem('sarita_pendientes')||'[]');
-  if(pendientes.length===0){showToast('No hay ventas pendientes');return;}
-  if(!navigator.onLine){showToast('Sin internet, intentá después');return;}
+  if(pendientes.length===0){ showToast('No hay ventas pendientes'); return; }
+  if(!navigator.onLine){ showToast('Sin internet, intentá después'); return; }
   showToast('Sincronizando...');
   const restantes=[];
   for(const v of pendientes){
-    try{await enviarVenta(v);}
-    catch(e){restantes.push(v);}
+    try{ await enviarVenta(v); }
+    catch(e){ restantes.push(v); }
   }
   localStorage.setItem('sarita_pendientes',JSON.stringify(restantes));
   actualizarBadge();
   const enviadas=pendientes.length-restantes.length;
   showToast(enviadas>0?`✓ ${enviadas} venta(s) sincronizadas`:'No se pudo sincronizar');
-}
-
-function showToast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-function cancelarOrden(){
-  if(orden.length===0)return;
-  if(confirm('¿Cancelar la orden actual?')){orden=[];renderOrden();}
-}
-
-let ventasPendConfirm=[];
-function prepararConfirm(){
-  let valido=true;
-  if(orden.length===0){showToast('Agregá al menos un producto');return false;}
-  const encargada=document.getElementById('encargada').value;
-  const billete=parseFloat(document.getElementById('billete').value)||0;
-  const encSel=document.getElementById('encargada');
-  if(!encargada){encSel.style.borderColor='#E8001A';showToast('Seleccioná la encargada');valido=false;}
-  else{encSel.style.borderColor='#e0e0e0';}
-  if(metodo==='Efectivo'&&billete<total&&total>0){
-    document.getElementById('billete').style.borderColor='#E8001A';
-    showToast('El billete es menor al total');valido=false;
-  }else{document.getElementById('billete').style.borderColor='#e0e0e0';}
-  return valido;
-}
-
-function abrirConfirm(){
-  if(!prepararConfirm())return;
-  const items=orden.map(i=>`${i.qty}x ${i.nombre}`).join(', ');
-  document.getElementById('confirm-detalle').textContent=`${items} — Total: $${total.toFixed(2)} (${metodo})`;
-  const m=document.getElementById('modal-confirm');
-  m.style.display='flex';
-}
-
-function cerrarConfirm(){
-  document.getElementById('modal-confirm').style.display='none';
-}
-
-async function confirmarVenta(){
-  cerrarConfirm();
-  const encargada=document.getElementById('encargada').value;
-  const billete=parseFloat(document.getElementById('billete').value)||0;
-  const btn=document.getElementById('btn-reg');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Registrando...';
-  const ventasData=orden.map(i=>({encargada,turno:TURNO,categoria:i.categoria,producto:i.nombre,tamano:i.tamano,cantidad:i.qty,precio_unitario:i.precio,total_venta:+(i.precio*i.qty).toFixed(2),metodo_pago:metodo,sabor:i.sabor||'',_ts:Date.now()}));
-  if(!navigator.onLine){
-    guardarPendientes(ventasData);
-    showToast('Sin internet — guardado localmente');
-    limpiarOrden();btn.disabled=false;btn.innerHTML='Registrar venta';return;
-  }
-  let todasOk=true;
-  for(const v of ventasData){
-    try{await enviarVenta(v);}catch(e){todasOk=false;guardarPendientes([v]);}
-  }
-  if(todasOk){
-    guardarVentasHoy(ventasData);
-    showToast('✓ Venta registrada');
-  }else{showToast('Parte guardada localmente');}
-  limpiarOrden();btn.disabled=false;btn.innerHTML='Registrar venta';
 }
 
 function guardarVentasHoy(ventas){
@@ -464,21 +454,29 @@ function verResumen(){
         <span style="font-size:13px;font-weight:600;color:#222">$${pedidosya.toFixed(2)}</span>
       </div>
     </div>
-    ${pendientes.length>0?`<p style="font-size:12px;color:#E8001A;text-align:center;margin-top:10px">⚠ ${pendientes.length} venta(s) pendiente(s) de sincronizar</p>`:''}
+    ${DEMO_MODE?'<p style="font-size:12px;color:#856404;text-align:center;margin-top:10px">🧪 Datos de demostración</p>':''}
+    ${!DEMO_MODE&&pendientes.length>0?`<p style="font-size:12px;color:#E8001A;text-align:center;margin-top:10px">⚠ ${pendientes.length} venta(s) pendiente(s) de sincronizar</p>`:''}
   `;
   document.getElementById('modal-resumen').style.display='flex';
 }
 
-function cerrarResumen(){
-  document.getElementById('modal-resumen').style.display='none';
+function cerrarResumen(){ document.getElementById('modal-resumen').style.display='none'; }
+
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function cancelarOrden(){
+  if(orden.length===0) return;
+  if(confirm('¿Cancelar la orden actual?')){ orden=[]; renderOrden(); }
 }
 
 cargarProductos();
-cargarProductos();
 cargarSabores();
 actualizarBadge();
-window.addEventListener('online',()=>{showToast('Conexión restaurada');setTimeout(sincronizarPendientes,1000);});
-window.addEventListener('offline',()=>{showToast('Sin internet — modo offline activo');});
+window.addEventListener('online',()=>{ if(!DEMO_MODE){ showToast('Conexión restaurada'); setTimeout(sincronizarPendientes,1000); } });
+window.addEventListener('offline',()=>{ if(!DEMO_MODE) showToast('Sin internet — modo offline activo'); });
 </script>
 </body>
 </html>
