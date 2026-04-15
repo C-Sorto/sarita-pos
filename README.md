@@ -2,7 +2,7 @@
 
 A lightweight, mobile-first point of sale (POS) web application built for **Kiosco Sarita**, a small ice cream retail kiosk in El Salvador. Designed to run entirely on a smartphone with no installation required.
 
-**Live app:** 
+**Live app:** https://c-sorto.github.io/sarita-pos/
 
 ---
 
