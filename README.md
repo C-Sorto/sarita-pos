@@ -83,8 +83,8 @@ Cashier (mobile app)
 
 ## 📱 Screenshots
 
-<img width="264" height="290" alt="image" src="https://github.com/user-attachments/assets/1d27ce28-4c8c-4457-92d9-c0d7f245b8fb" />
-<img width="240" height="297" alt="image" src="https://github.com/user-attachments/assets/86bd6aac-66df-466e-be88-4b6fcab90d6a" />
+<img width="424" height="518" alt="image" src="https://github.com/user-attachments/assets/9354f71b-2f39-41e7-ad8d-181d5ed537b3" />
+<img width="429" height="395" alt="image" src="https://github.com/user-attachments/assets/dfd8db58-3163-4bd2-9509-22eced1123a1" />
 
 ---
 
