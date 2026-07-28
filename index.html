@@ -268,8 +268,9 @@ function renderOrden(){
     total=orden.reduce((s,i)=>s+i.precio*i.qty,0);
     el.innerHTML=orden.map(i=>`<div class="oitem"><div class="oitem-nombre">${i.nombre}${i.sabor?' <span style="font-size:11px;color:#999">('+i.sabor+')</span>':''}</div><div class="qty-ctrl"><button class="qbtn" onclick="cambiarQty('${i.key}',-1)">−</button><span class="qnum">${i.qty}</span><button class="qbtn" onclick="cambiarQty('${i.key}',1)">+</button></div></div>`).join('');
   }
-  document.getElementById('total').textContent='';
-  document.getElementById('total').style.display='none';
+  const totalEl=document.getElementById('total');
+  totalEl.textContent='$'+total.toFixed(2);
+  totalEl.style.display='block';
   calcVuelto();
 }
 
@@ -298,14 +299,19 @@ function prepararConfirm(){
   const encargada=document.getElementById('encargada').value;
   const billete=parseFloat(document.getElementById('billete').value)||0;
   const encSel=document.getElementById('encargada');
-  let valido=true;
-  if(!encargada){ encSel.style.borderColor='#E8001A'; showToast('Seleccioná la encargada'); valido=false; }
-  else{ encSel.style.borderColor='#e0e0e0'; }
+  if(!encargada){
+    encSel.style.borderColor='#E8001A';
+    showToast('Seleccioná la encargada');
+    return false;
+  }
+  encSel.style.borderColor='#e0e0e0';
   if(metodo==='Efectivo'&&billete<total&&total>0){
     document.getElementById('billete').style.borderColor='#E8001A';
-    showToast('El billete es menor al total'); valido=false;
-  } else { document.getElementById('billete').style.borderColor='#e0e0e0'; }
-  return valido;
+    showToast('El billete es menor al total');
+    return false;
+  }
+  document.getElementById('billete').style.borderColor='#e0e0e0';
+  return true;
 }
 
 function abrirConfirm(){
