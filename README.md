@@ -1,126 +1,98 @@
-# 🍦 Sarita POS — Point of Sale System
+# Sarita POS
 
-A lightweight, mobile-first point of sale (POS) web application built for **Kiosco Sarita**, a small ice cream retail kiosk in El Salvador. Designed to run entirely on a smartphone with no installation required.
+Demo público de un sistema de ventas creado para un kiosco de helados en El Salvador. La versión privada se utiliza todos los días para apoyar el registro de ventas y continúa mejorando a partir de las necesidades del negocio.
 
-**Live app:** https://c-sorto.github.io/sarita-pos/
+**[Probar el demo](https://c-sorto.github.io/sarita-pos/)**
 
----
+> Este repositorio es exclusivamente demostrativo. Utiliza un catálogo de prueba, una vendedora ficticia y no guarda ventas en el sistema de producción.
 
-## 📋 Overview
+## Problema que resuelve
 
-Kiosco Sarita needed a simple, reliable way to register sales, track inventory, and visualize daily metrics — without expensive POS hardware or complex software. This system replaces manual paper tracking with a real-time digital solution built on free tools.
+El kiosco necesitaba una herramienta sencilla para registrar ventas desde un teléfono, reducir errores durante el cobro y consultar el resultado de la jornada sin depender de un sistema complejo.
 
-**The result:** A fully functional POS app that works offline, syncs automatically, and feeds data into a live business dashboard.
+Sarita POS organiza el proceso en un flujo corto: seleccionar productos, preparar la orden, elegir el método de pago, calcular el cambio y confirmar la venta.
 
----
+## Funciones disponibles en el demo
 
-## 🛠️ Tech Stack
+- Catálogo organizado por categorías.
+- Selección de productos, sabores y cantidades.
+- Preparación y cancelación de órdenes.
+- Métodos de pago: efectivo, tarjeta y Pedidos Ya.
+- Cálculo automático del cambio.
+- Validaciones antes de confirmar una venta.
+- Resumen local del día por método de pago.
+- Interfaz adaptable a teléfonos.
+- Datos separados del entorno real.
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | HTML, CSS, JavaScript (Vanilla) |
-| Hosting | GitHub Pages |
-| Backend / API | Google Apps Script (doGet) |
-| Database | Google Sheets |
-| Dashboard | Looker Studio |
-| Communication | JSONP (CORS-safe) |
+## Mi aporte al proyecto
 
----
+Mi participación se concentra en el análisis funcional y la operación del sistema:
 
-## ✨ Features
+- Identificación de necesidades junto al dueño y las vendedoras.
+- Definición de reglas de negocio y del flujo de venta.
+- Organización del catálogo y de los datos necesarios.
+- Pruebas manuales de los casos de uso y validaciones.
+- Detección, reporte y seguimiento de errores.
+- Validación del sistema durante su uso diario.
+- Propuesta y priorización de mejoras.
+- Documentación y control de cambios con Git y GitHub.
 
-- **Dynamic product catalog** — loads products and prices from Google Sheets in real time
-- **Category-based navigation** — quick selection across 8 product categories
-- **Sale registration** — records product, quantity, price, payment method, and cashier
-- **Change calculator** — real-time change calculation with quick bill buttons ($1, $5, $10, $20, $50)
-- **Offline mode** — saves sales locally when there's no internet connection
-- **Auto-sync** — automatically sends pending sales when connectivity is restored
-- **Daily summary** — shows total sales, transaction count, and breakdown by payment method
-- **PWA support** — installable on Android as a home screen app
-- **Confirmation modal** — shows order summary before registering each sale
+Este proyecto demuestra mi capacidad para comprender un problema real, convertirlo en requisitos claros, probar una solución y acompañarla después de su puesta en uso.
 
----
+## Tecnologías presentes en la solución
 
-## 🗂️ Data Architecture
+- HTML, CSS y JavaScript.
+- Google Apps Script.
+- Google Sheets.
+- Git y GitHub.
+- GitHub Pages para publicar el demo.
 
-All business data lives in Google Sheets with the following structure:
+Las tecnologías anteriores describen la solución. Mi enfoque personal en este proyecto es el análisis, las reglas funcionales, las pruebas y la mejora continua.
 
-| Sheet | Purpose |
-|-------|---------|
-| `RAW_DATA` | All sales records (main data source) |
-| `CATALOGO_PRODUCTOS` | Active products with SKU, category, and price |
-| `CATALOGO_INSUMOS` | Supplies and costs |
-| `INVENTARIO_MAESTRO` | Stock control |
-| `TABLA_RECETAS` | Product recipes |
-| `VENTAS_CONSOLIDADAS` | Daily sales summary |
-| `COSTOS_MARGENES` | Cost and margin analysis |
-| `RAW_RECEPCION` | Inventory entries |
-| `RAW_MERMAS` | Waste/loss records |
+## Cómo funciona el demo
 
----
+```text
+Usuario
+  |
+  v
+Interfaz web en GitHub Pages
+  |
+  +--> Catálogo de demostración
+  |
+  +--> Venta simulada y resumen local
 
-## 🚀 How It Works
-
-```
-Cashier (mobile app)
-       ↓
-   GitHub Pages (Frontend)
-       ↓ JSONP GET request
-   Google Apps Script (API)
-       ↓
-   Google Sheets (Database)
-       ↓
-   Looker Studio (Dashboard)
+Producción: repositorio, datos y accesos separados
 ```
 
-1. The app loads the product catalog from Google Sheets via Apps Script
-2. The cashier selects products, enters payment, and confirms the sale
-3. The sale is sent as a GET request to the Apps Script endpoint
-4. Data is written to `RAW_DATA` in Google Sheets
-5. Looker Studio reads from the Sheet and updates the dashboard in real time
+Las ventas simuladas permanecen en el navegador del visitante. El demo no contiene acceso al Google Sheet, al panel administrativo ni a la aplicación utilizada en el negocio.
 
----
+## Capturas
 
-## 📱 Screenshots
+<img width="424" height="518" alt="Selección de productos en Sarita POS" src="https://github.com/user-attachments/assets/9354f71b-2f39-41e7-ad8d-181d5ed537b3" />
+<img width="429" height="395" alt="Proceso de cobro en Sarita POS" src="https://github.com/user-attachments/assets/dfd8db58-3163-4bd2-9509-22eced1123a1" />
 
-<img width="424" height="518" alt="image" src="https://github.com/user-attachments/assets/9354f71b-2f39-41e7-ad8d-181d5ed537b3" />
-<img width="429" height="395" alt="image" src="https://github.com/user-attachments/assets/dfd8db58-3163-4bd2-9509-22eced1123a1" />
+## Ejecutarlo localmente
 
----
-
-## 🔧 Local Development
-
-No build tools required. Clone the repo and open `index.html` in your browser.
+No requiere herramientas de compilación.
 
 ```bash
 git clone https://github.com/C-Sorto/sarita-pos.git
 cd sarita-pos
-# Open index.html in your browser
 ```
 
-To connect your own Google Sheets backend:
-1. Copy the Apps Script code to your own Google Apps Script project
-2. Deploy it as a web app (execute as: me, access: anyone)
-3. Replace the `SCRIPT_URL` constant in `index.html` with your deployment URL
+Después, abre `index.html` en un navegador.
 
----
+## Próximas mejoras
 
-## 📈 Business Impact
+- Documentar casos de prueba.
+- Incorporar una guía visual completa del flujo.
+- Mejorar accesibilidad y mensajes de validación.
+- Registrar mejoras y errores mediante Issues.
 
-- Eliminated manual paper-based sales tracking
-- Real-time inventory and revenue visibility for the owner
-- Offline-capable — works even with unstable internet
-- Zero hardware cost — runs on any smartphone
+## Autor
 
----
+**Christian Sorto**
 
-## 👨‍💻 Author
+Estudiante de Ingeniería en Sistemas
 
-**Christian Sorto** — Systems Engineering Student & Backend Developer in training  
-[linkedin.com/in/christian-sorto-cortez](https://linkedin.com/in/christian-sorto-cortez)
-
----
-
-## 📄 License
-
-This project was built for a specific business use case. Feel free to use it as inspiration for your own POS system.
+[LinkedIn](https://www.linkedin.com/in/christian-sorto-cortez/)

@@ -186,15 +186,14 @@
 
 <script>
 // ============================================================
-// CONFIGURACIÓN — solo cambiá esta línea para alternar modos
-// true  = modo demo (para portfolio/recruiters, no guarda nada)
-// false = modo real (kiosco Sarita, guarda en Google Sheets)
+// CONFIGURACIÓN DEL DEMO PÚBLICO
+// Este repositorio usa únicamente datos de demostración.
+// El entorno real se mantiene separado y privado.
 // ============================================================
 const DEMO_MODE = true;
 
-const SCRIPT_URL_REAL = 'https://script.google.com/macros/s/AKfycby_0-BmUk80e-KeKOHa0KzRLwY1QvSiqI-aS0JPvn7OCfPyiJSaxOqJGpADS86kmI0dXA/exec';
 const SCRIPT_URL_DEMO = 'https://script.google.com/macros/s/AKfycbzpujranJfSGtEmANsDut-BQeFOHDdwdPTTisj5L4nEnPMiMUUAUW8Dewp5SxJy7tWY1w/exec';
-const SCRIPT_URL = DEMO_MODE ? SCRIPT_URL_DEMO : SCRIPT_URL_REAL;
+const SCRIPT_URL = SCRIPT_URL_DEMO;
 
 const TURNO = '11am-8pm';
 const CATS_ORDER = ['Bebidas','Conos','Especialidades','Mini Especialidades','Peleteria','Envasados','Pasteles','Otros'];
