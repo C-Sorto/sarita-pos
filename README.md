@@ -72,6 +72,13 @@ Production: separate private repository, data, and access controls
 
 Simulated sales remain in the visitor's browser. The public demo does not include the production spreadsheet, administrative dashboard, or employee application.
 
+## Documentation
+
+- [Functional requirements](docs/REQUIREMENTS.md)
+- [Manual test cases](docs/TEST_CASES.md)
+- [Architecture overview](docs/ARCHITECTURE.md)
+- [Open improvements and defects](https://github.com/C-Sorto/sarita-pos/issues)
+
 ## Screenshots
 
 <img width="424" height="518" alt="Product selection in Sarita POS" src="https://github.com/user-attachments/assets/9354f71b-2f39-41e7-ad8d-181d5ed537b3" />
@@ -90,10 +97,10 @@ Then open `index.html` in a browser.
 
 ## Roadmap
 
-- Document complete test cases.
 - Add a visual walkthrough of the sales flow.
 - Improve accessibility and validation messages.
-- Track enhancements and defects through GitHub Issues.
+- Add automated tests for checkout calculations and validations.
+- Separate the public demo's styles and scripts into maintainable files.
 
 ## Author
 
