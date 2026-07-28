@@ -1,5 +1,7 @@
 # Sarita POS
 
+![Sarita POS social preview](assets/social-preview.png)
+
 Sarita POS is a sales system created for an ice cream kiosk. The private production version is used every day and continues to evolve around the needs of the owner and sales staff.
 
 **[Open the public demo](https://c-sorto.github.io/sarita-pos/)**
