@@ -1,6 +1,6 @@
 # Sarita POS
 
-Sarita POS is a sales system created for an ice cream kiosk in El Salvador. The private production version is used every day and continues to evolve around the needs of the owner and sales staff.
+Sarita POS is a sales system created for an ice cream kiosk. The private production version is used every day and continues to evolve around the needs of the owner and sales staff.
 
 **[Open the public demo](https://c-sorto.github.io/sarita-pos/)**
 
